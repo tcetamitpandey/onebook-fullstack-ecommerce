@@ -67,7 +67,7 @@ def Register_page_view(req):
             login(req,user)
             return redirect("home")
         else:
-             return HttpResponse("Invalid Data")
+             return HttpResponse(f"Invalid Data: {new_user.error_messages}")
     else:
         context={
             "Registration_form" : Registration_form
@@ -219,3 +219,29 @@ def detailed_view(req,product_id):
 #To add New Products
 def SellView(req):
     pass
+
+import random
+import datetime
+
+def BuyView(req):
+
+    userCart=Cart_Model.objects.get(user=req.user)
+    total=userCart.total_price()
+    Cart_Model.objects.get(user=req.user).delete()
+
+    if not total:
+        amount=0
+    else:
+        amount=total
+
+    current_datetime = datetime.datetime.now()
+
+    orderID = random.randint(0, int((current_datetime - datetime.datetime(1970, 1, 1)).total_seconds()))
+
+
+
+    context={
+        "amount":amount,
+        "orderID":orderID
+    }
+    return render(req,"buy.html",context)

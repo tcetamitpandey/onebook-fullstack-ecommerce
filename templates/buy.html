@@ -1,0 +1,21 @@
+{% load static %}
+<h1>Make Your Purchase</h1>
+
+<style>
+    .showimg{
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 30vh;
+    }
+
+</style>
+
+<!-- <img class="showimg" src="https://www.geeks3d.com/public/jegx/2020q3/qrcode_tweet_shader12.jpg" alt=""> -->
+<img class="showimg" src="{% static 'qr.jpg' %}" alt="">
+
+<h4>Your OrderID : {{orderID}}</h4>
+<br>
+<h4>Total Amount to be Payed : {{amount}}</h4>
+
+<a href="{% url 'home' %}"><button>Return to Home</button></a>
+
