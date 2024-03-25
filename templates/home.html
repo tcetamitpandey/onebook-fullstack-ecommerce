@@ -47,7 +47,7 @@
         margin: 5px;
     }
 
-    /* styling card container and data items */
+   
     .data_container {
     display: flex;
     flex-wrap: wrap;
@@ -69,19 +69,19 @@
 }
 /* Delay hover effect */
 .product_card:hover:not(:active) {
-    transition-delay: 0.3s; /* Adjust the delay time as needed */
+    transition-delay: 0.3s; 
 }
 
 
 @media (max-width: 768px) {
     .product_card {
-        width: calc(100% - 20px); /* One item per row on smaller screens */
+        width: calc(100% - 20px); 
     }
 }
 
 .product_image {
     width: 100%;
-    max-width: 200px; /* Adjust as needed */
+    max-width: 200px;
     height: auto;
     margin-right: 12px;
 }
@@ -98,7 +98,7 @@
 
 .product_price {
     font-size: 16px;
-    color: #007185; /* Amazon's primary color */
+    color: #007185; 
     margin-bottom: 8px;
 }
 
@@ -119,7 +119,7 @@
 
 .rating_value {
     font-weight: bold;
-    color: #c45500; /* Amazon's rating color */
+    color: #c45500; 
     margin-right: 4px;
 }
 
@@ -143,23 +143,48 @@
     box-shadow: 2px 2px 4px black;
 }
 
+.login_logout{
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.login_logout a{
+    color: #233142;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 20px;
+}
+
+@media screen and (max-width: 700px) {
+    .nav_options {
+        display: none;
+    }
+}
 
 
 </style>
 
 <nav class="nav_container">
     <div class="company_name">
-        <h1>Amit Shop : Your Ecommerce platform </h1>
+        <h1>PadhLe : Your Ecommerce platform </h1>
     </div>
 
     <div class="nav_options">
         <a href="{% url 'home' %}">Home</a>
-        <a href="{% url 'add_to_cart' user_id %}">Cart</a>
+        <a href="{% url 'viewcart' %}">Cart</a>
         <a href="{% url 'about' %}">About</a>
     </div>
     
     <div class="username">
         <a href="{% url 'home' %}"><h3>Welcome {{username|upper}}</h3></a>
+    </div>
+    
+    <div class="login_logout">
+        {% if username %}
+        <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+        <a href="{% url 'login' %}">Login</a>
+        {% endif %}
     </div>
 </nav>
 
@@ -174,16 +199,15 @@
             <div class="product_info">
                 <h3 class="product_title">{{ data.title }}</h3>
                 <p class="product_price">${{ data.price }}</p>
-                <p class="product_description">{{ data.desc  | truncatewords:25}}</p>
-                <p class="product_category">{{ data.category }}</p>
+                <p class="product_description">{{ data.subtitle  | truncatewords:25}}</p>
+                <p class="product_category">{{ data.author }}</p>
                 <div class="product_rating">
-                    <p class="rating_value">{{ data.rating }}</p>
-                    <p class="rating_count">{{ data.rating_count }} ratings</p>
+                    <a class="rating_value"  href={{data.url}}>   Read More ...</a>
                     
                 </div>
             </div>
             <a class="add_to_cart_home" href="{% url 'add_to_cart' data.id %}">Add To Cart</a>
-            <!-- <a class="add_to_cart_home" href="{% url 'detailed_view' data.id %}">Read More</a> -->
+
         </div>
         {% endfor %}
     </div>

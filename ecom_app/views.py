@@ -1,41 +1,59 @@
 from django.shortcuts import render,HttpResponse,redirect,get_object_or_404
-from ecom_app.forms import Registration_form
-from django.http import Http404
+# from ecom_app.forms import Registration_form
+from django.contrib.auth.forms import UserCreationForm as Registration_form
+
+from django.contrib.auth.forms import AuthenticationForm as Login_form
+from django.contrib.auth import login,logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+
 import requests
 
+import random
+
 from ecom_app.models import Product_Model
-from ecom_app.models import User_Model
 from ecom_app.models import Cart_Model
+from ecom_app.models import Cart_item
 
-# Create your views here.
+def landingView(req):
+
+    return render(req,"landing.html")
+
+@login_required(login_url="login")
 def Home_page_view(req):
-    #if user has logined then only they are allowed to view home page else they are redirected to registration page
-
-    islogin=req.session.get("username")
-
-    if islogin:
-        # print(f"\n\nwhat is inside is login : {islogin} \n\n")
-
-        logined_user=User_Model.objects.get(username=islogin)
 
         all_data=Product_Model.objects.all()
 
-        user_id=logined_user.id
-
         context={
-            "username" : islogin,
-            "user_id":user_id,
             "all_data":all_data,
+            "username": req.user.username,
         }
 
         return render(req,"home.html", context)
-    else:
-        return redirect("register")
     
     
 def Login_page_view(req):
+
+    if req.method=="POST":
+
+        data=Login_form(data=req.POST)
+
+        if data.is_valid():
+            login(req,data.get_user())
+            return redirect("home")
+
+    context={
+        "form" : Login_form,
+        "username": req.user.username,
+    }
     
-    return render(req,"login.html")
+    return render(req,"login.html",context)
+    
+def Logout_page_view(req):
+
+    logout(req)
+    
+    return render(req,"landing.html")
 
 
 def Register_page_view(req):
@@ -44,55 +62,44 @@ def Register_page_view(req):
         
         new_user=Registration_form(req.POST)
         
-        usrname_exists=User_Model.objects.filter(username=req.POST.get("username"))
-
-        if usrname_exists:
-            return HttpResponse("<h3>Username Already Taken</h3>")
-        
-        elif new_user.is_valid():
-
-            new_user.save()
-
-            req.session["username"]=req.POST.get("username")
-
-            req.session["user_id"]=req.POST.get("id")
-
+        if new_user.is_valid():
+            user = new_user.save()
+            login(req,user)
             return redirect("home")
+        else:
+             return HttpResponse("Invalid Data")
+    else:
+        context={
+            "Registration_form" : Registration_form
+        }
 
-    context={
-        "Registration_form" : Registration_form
-    }
-
-    return render(req,"register.html",context)
+        return render(req,"register.html",context)
 
 def load_api_data(req):
 
-    api_data=requests.get("https://fakestoreapi.com/products")
+    # api_data=requests.get("https://fakestoreapi.com/products")
+    api_data=requests.get("https://www.dbooks.org/api/recent")
 
     if api_data.status_code==200:
 
         json_data=api_data.json()
+        json_data=json_data["books"]
 
         for item in json_data:
             title=item.get("title")
-            price=item.get("price")
-            desc=item.get("description")
-            category=item.get("category","Unknown")
+            price=random.randint(100,999)
+            author=item.get("authors")
+            subtitle=item.get("subtitle")
             image=item.get("image")
-            # here this "rating" itself is a dictionary and it contain rate and count
-            rating_dict=item["rating"]
-
-            rating=rating_dict["rate"]
-            rating_count=rating_dict["count"]
+            url=item.get("url")
 
             Product_Model.objects.create(
                 title=title,
                 price=price,
-                desc=desc,
-                category=category,
+                author=author,
+                subtitle=subtitle,
+                url=url,
                 image=image,
-                rating=rating,
-                rating_count=rating_count,
             )
 
         return redirect("home")
@@ -104,73 +111,111 @@ def load_api_data(req):
 """
 You retrieve the product instance based on the provided product ID. Then, you check if a user is logged in. If a user is logged in, you retrieve the corresponding user instance. After that, you create or retrieve the cart associated with the user. If the cart doesn't exist, it's created. Next, you add the retrieved product to the cart. Finally, you render the cart page with the updated list of products in the cart (Frontend).
 """
-def Add_to_Cart(req,product_id):
-    product_to_add=get_object_or_404(Product_Model,id=product_id)
+# def Add_to_Cart(req,product_id):
+#     product_to_add=get_object_or_404(Product_Model,id=product_id)
 
-    islogin=req.session.get("username")
+#     islogin=req.session.get("username")
 
-    if islogin:
+#     if islogin:
 
-        try:
-            curr_user=get_object_or_404(User_Model,username=islogin)
-        except User_Model.DoesNotExist:
-            raise Http404("User does not Exist")
+#         try:
+#             curr_user=get_object_or_404(User_Model,username=islogin)
+#         except User_Model.DoesNotExist:
+#             raise Http404("User does not Exist")
         
-        #created/ retreving a Cart for this specific User
+#         #created/ retreving a Cart for this specific User
 
-        #The _ in this line is used to discard the second element of the tuple (i.e., the boolean value indicating whether the instance was created or not)
-        cart,_ = Cart_Model.objects.get_or_create(user=curr_user)
+#         #The _ in this line is used to discard the second element of the tuple (i.e., the boolean value indicating whether the instance was created or not)
+#         cart,_ = Cart_Model.objects.get_or_create(user=curr_user)
 
-        #adding products to that cart
-        cart.products_in_cart.add(product_to_add)
+#         #adding products to that cart
+#         cart.products_in_cart.add(product_to_add)
 
-        # product_in_cart=Cart_Model.objects.all() # previously i was getting all the data  for all user 
+#         # product_in_cart=Cart_Model.objects.all() # previously i was getting all the data  for all user 
 
-        product_in_cart=Cart_Model.objects.filter(user=curr_user)
-        product_in_cart=product_in_cart
+        # product_in_cart=Cart_Model.objects.get(user=curr_user)
+        # product_in_cart=product_in_cart
 
-        # sending user id to fix nav bar issue
-        logined_user=User_Model.objects.get(username=islogin)
-        user_id=logined_user.id
-        username=req.session.get("username")
-        context={
-            "product_in_cart":product_in_cart,
-            "user_id":user_id,
-            "username":username
-        }
+        # # sending user id to fix nav bar issue
+        # logined_user=User_Model.objects.get(username=islogin)
+        # user_id=logined_user.id
+        # username=req.session.get("username")
+        # context={
+        #     "product_in_cart":product_in_cart,
+        #     "user_id":user_id,
+        #     "username":username
+        # }
 
-        return render(req,"cart.html",context)
+#         return render(req,"cart.html",context)
     
+#     else:
+#         return redirect("login")
+    
+# =======================================
+       
+# ----------------------
+@login_required(login_url="login")
+def Add_to_Cart(req, product_id):
+    if req.user.is_authenticated:
+        product_to_add = get_object_or_404(Product_Model, id=product_id)
+        item_in_cart, already_exist = Cart_item.objects.get_or_create(products=product_to_add)
+        if already_exist:
+            item_in_cart.quantity += 1
+            item_in_cart.save() 
+
+        cart_instance, _ = Cart_Model.objects.get_or_create(user=req.user)
+        cart_instance.items.add(item_in_cart)
+
+        total_money = cart_instance.total_price() if hasattr(cart_instance, 'total_price') else None
+
+        context = {
+            "total": total_money,
+            "product_in_cart": cart_instance.items.all(),
+            "username": req.user.username,
+        }
+        return render(req, "cart_v_2.html", context)
     else:
         return redirect("login")
-    
 
-def AboutView(req):
-    # sending user id to fix nav bar issue
-    islogin=req.session.get("username")
-    logined_user=User_Model.objects.get(username=islogin)
-    user_id=logined_user.id
-    username=req.session.get("username")
+
+
+# ====================================================
+@login_required(login_url="login")
+def Viewcart(req):
+
+    cart_instance, already_exist = Cart_Model.objects.get_or_create(user=req.user)
+
+    product_in_cart=cart_instance.items.all()
     context={
-        "user_id":user_id,
-        "username":username,
+        "product_in_cart":product_in_cart,
+        "user_id": User.id,
+        "username": req.user.username,
+    }
+
+    return render(req,"cart_v_2.html",context)
+
+@login_required(login_url="login")
+def AboutView(req):
+    context={
+        "user_id":User.id,
+        "username": req.user.username,
     }
     return render(req,"about.html",context)
 
+@login_required(login_url="login")
 def detailed_view(req,product_id):
-    # sending user id to fix nav bar issue
-    islogin=req.session.get("username")
-
-    logined_user=User_Model.objects.get(username=islogin)
-    user_id=logined_user.id
-    username=req.session.get("username")
 
     this_product_data=Product_Model.objects.get(id=product_id)
 
     context={
-        "user_id":user_id,
-        "username":username,
+        "user_id":req.user.id,
+        "username":req.user.username,
         "this_product_data" : this_product_data
 
     }
     return render(req,"detailed_html.html",context)
+
+
+#To add New Products
+def SellView(req):
+    pass
