@@ -47,8 +47,10 @@ section{
 
 </style>
 
-<div class="cart_title">Your Cart {{ username }}</div>
+<div class="cart_title">Your Cart : {{ username|upper }}</div>
 <section>
+
+
 {% for item in product_in_cart %}
 
 
@@ -70,7 +72,8 @@ section{
 {% else %}
 <div class="buy_btn_div">
     <a href="{% url 'home'  %}">
-        <button class="buy_btn">Its Empty Add Some Items :( </button>
+        
+        <button class="buy_btn">Its Empty :( Add Some Items - _ - </button>
     </a>
 </div>
 

@@ -14,6 +14,7 @@ from ecom_app.views import SellView
 from ecom_app.views import BuyView
 
 
+
 urlpatterns=[
 
     path("",landingView,name="landing"),
@@ -30,7 +31,8 @@ urlpatterns=[
     path("about/",AboutView,name="about"),
 
     path("sell/",SellView,name="sell"), # To Sell / add item
-    path("buy/",BuyView,name="buyNow"), # To Sell / add item
+    path("buy/",BuyView,name="buyNow"), 
+ 
 
     # comments
     # sell

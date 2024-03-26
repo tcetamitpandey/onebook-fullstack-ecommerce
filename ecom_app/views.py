@@ -41,6 +41,10 @@ def Login_page_view(req):
         if data.is_valid():
             login(req,data.get_user())
             return redirect("home")
+        else:
+            error_message = "Invalid data. Please check your input."
+                
+            return render(req, "error.html", context={"error": error_message})
 
     context={
         "form" : Login_form,
@@ -53,7 +57,7 @@ def Logout_page_view(req):
 
     logout(req)
     
-    return render(req,"landing.html")
+    return redirect("landing")
 
 
 def Register_page_view(req):
@@ -63,11 +67,15 @@ def Register_page_view(req):
         new_user=Registration_form(req.POST)
         
         if new_user.is_valid():
-            user = new_user.save()
-            login(req,user)
+            login(req,new_user.save())
             return redirect("home")
         else:
-             return HttpResponse(f"Invalid Data: {new_user.error_messages}")
+            if 'username' in new_user.errors and 'unique' in new_user.errors['username']:
+                error_message = "Username is already taken. Please choose a different one."
+            else:
+                error_message = "Invalid data. Please check your input.\nUsername Might already be taken try Different One"
+
+            return render(req, "error.html", context={"error": error_message})
     else:
         context={
             "Registration_form" : Registration_form
@@ -111,49 +119,8 @@ def load_api_data(req):
 """
 You retrieve the product instance based on the provided product ID. Then, you check if a user is logged in. If a user is logged in, you retrieve the corresponding user instance. After that, you create or retrieve the cart associated with the user. If the cart doesn't exist, it's created. Next, you add the retrieved product to the cart. Finally, you render the cart page with the updated list of products in the cart (Frontend).
 """
-# def Add_to_Cart(req,product_id):
-#     product_to_add=get_object_or_404(Product_Model,id=product_id)
-
-#     islogin=req.session.get("username")
-
-#     if islogin:
-
-#         try:
-#             curr_user=get_object_or_404(User_Model,username=islogin)
-#         except User_Model.DoesNotExist:
-#             raise Http404("User does not Exist")
-        
-#         #created/ retreving a Cart for this specific User
-
-#         #The _ in this line is used to discard the second element of the tuple (i.e., the boolean value indicating whether the instance was created or not)
-#         cart,_ = Cart_Model.objects.get_or_create(user=curr_user)
-
-#         #adding products to that cart
-#         cart.products_in_cart.add(product_to_add)
-
-#         # product_in_cart=Cart_Model.objects.all() # previously i was getting all the data  for all user 
-
-        # product_in_cart=Cart_Model.objects.get(user=curr_user)
-        # product_in_cart=product_in_cart
-
-        # # sending user id to fix nav bar issue
-        # logined_user=User_Model.objects.get(username=islogin)
-        # user_id=logined_user.id
-        # username=req.session.get("username")
-        # context={
-        #     "product_in_cart":product_in_cart,
-        #     "user_id":user_id,
-        #     "username":username
-        # }
-
-#         return render(req,"cart.html",context)
-    
-#     else:
-#         return redirect("login")
-    
 # =======================================
-       
-# ----------------------
+
 @login_required(login_url="login")
 def Add_to_Cart(req, product_id):
     if req.user.is_authenticated:
@@ -176,8 +143,6 @@ def Add_to_Cart(req, product_id):
         return render(req, "cart_v_2.html", context)
     else:
         return redirect("login")
-
-
 
 # ====================================================
 @login_required(login_url="login")
@@ -221,27 +186,25 @@ def SellView(req):
     pass
 
 import random
-import datetime
+import string
+from django.utils import timezone
 
 def BuyView(req):
+    try:
+        userCart = Cart_Model.objects.get(user=req.user)
+        total = userCart.total_price()
+        userCart.delete()
+    except Cart_Model.DoesNotExist:
+        total = 0
 
-    userCart=Cart_Model.objects.get(user=req.user)
-    total=userCart.total_price()
-    Cart_Model.objects.get(user=req.user).delete()
+    amount = total if total else 0
 
-    if not total:
-        amount=0
-    else:
-        amount=total
+    # Generate a unique order ID
+    current_datetime = str(timezone.now())
+    orderID = ''.join(random.choices(string.ascii_letters + string.digits + current_datetime, k=8))
 
-    current_datetime = datetime.datetime.now()
-
-    orderID = random.randint(0, int((current_datetime - datetime.datetime(1970, 1, 1)).total_seconds()))
-
-
-
-    context={
-        "amount":amount,
-        "orderID":orderID
+    context = {
+        "amount": amount,
+        "orderID": orderID
     }
-    return render(req,"buy.html",context)
+    return render(req, "buy.html", context)
