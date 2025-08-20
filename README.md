@@ -46,20 +46,13 @@ Installation & Setup
 
 
 
-git clone https://github.com/tcetamitpandey/Django_proj.git
-cd Django_proj
+git clone https://github.com/tcetamitpandey/onebook-fullstack-ecommerce.git
+cd onebook-fullstack-ecommerce
 
-2. Create and activate virtual environment
+2. Create or activate virtual environment
 
-
-
-python -m venv venv
-source venv/bin/activate   # Mac/Linux
-venv\Scripts\activate      # Windows
 
 3. Install dependencies
-
-
 
 pip install -r requirements.txt
 
